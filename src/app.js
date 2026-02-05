@@ -4,6 +4,8 @@ const connectDB = require("./config/database");
 const app = express();
 const User = require('./models/user');
 
+app.use(express.json());
+
 // const {adminAuth, userAuth} = require("./middlewares/auth")
 
 // app.get("/", (req, res) => {
@@ -92,21 +94,50 @@ const User = require('./models/user');
 
 
 app.post("/signup", async(req,res) => {
+
+    // console.log(req.body);
     // Creating a new instance of a User Model
-    const user = new User({
-        firstName: "Virat",
-        lastName: "Kohli",
-        emailId: "virat@kohli.com",
-        password: "virat@1234"
-    });
+    const user = new User(req.body);
     try{
       await user.save();
     res.send("User Added Successfully");
     } catch (err) {
       res.status(400).send("Error saving user:" + err.message);
-    }
-    
+    } 
+});
+
+// GET User by Email
+app.get("/user", async (req, res) => {
+  const userEmail = req.body.emailId;
+
+  try{
+   const user = await User.findOne({emailId: userEmail});
+   if(!user){
+    res.status(404).send("User not found");
+   } else{
+    res.send(user);
+   }
+
+  //  const users = await User.find({emailId: userEmail});
+  //  if(users.length === 0){
+  //   res.status(404).send("User not found");
+  //  } else{
+  //   res.send(users);
+  //  }
+  } catch(err){
+    res.status(400).send("Something Went Wrong");
+  }
 })
+
+// Feed API GET: /feed
+app.get("/feed", async (req, res) => {
+  try{
+     const users = await User.find({});
+     res.send(users);
+  } catch(err){
+    res.status(400).send("Something Went Wrong");
+  }
+});
 
 connectDB().then(() => {
 console.log("Database Connection Established");
@@ -114,7 +145,8 @@ app.listen(7777, () => {
     console.log("Server is running on port 7777");
 });
 }).catch(err => {
-console.log("Database connection is not Established");
+console.error(" Database connection FAILED");
+console.error(err);
 })
 
 app.listen(7777, () => {
